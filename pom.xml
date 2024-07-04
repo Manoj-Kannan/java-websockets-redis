@@ -8,6 +8,28 @@
   <name>java-websockets-redis</name>
   <url>http://maven.apache.org</url>
   <dependencies>
+    <!-- WebSocket API -->
+    <dependency>
+      <groupId>javax.websocket</groupId>
+      <artifactId>javax.websocket-api</artifactId>
+      <version>1.1</version>
+    </dependency>
+
+    <!-- Redis (Jedis) -->
+    <dependency>
+      <groupId>redis.clients</groupId>
+      <artifactId>jedis</artifactId>
+      <version>3.6.3</version>
+    </dependency>
+
+    <!-- Servlet API (for WebSocket deployment) -->
+    <dependency>
+      <groupId>javax.servlet</groupId>
+      <artifactId>javax.servlet-api</artifactId>
+      <version>4.0.1</version>
+      <scope>provided</scope>
+    </dependency>
+
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>

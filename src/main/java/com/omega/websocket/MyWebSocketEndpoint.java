@@ -5,6 +5,8 @@ import com.omega.redis.RedisPublisher;
 import com.omega.redis.RedisSubscriber;
 import redis.clients.jedis.Jedis;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import javax.websocket.OnClose;
 import javax.websocket.OnMessage;
@@ -16,6 +18,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
 @ServerEndpoint("/websocket")
 public class MyWebSocketEndpoint {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(MyWebSocketEndpoint.class);
     private static final CopyOnWriteArraySet<MyWebSocketEndpoint> webSocketSet = new CopyOnWriteArraySet<>();
     private static final RedisPublisher redisPublisher = new RedisPublisher();
     private Session session;
@@ -33,7 +36,7 @@ public class MyWebSocketEndpoint {
     public void onOpen(Session session) {
         this.session = session;
         webSocketSet.add(this);
-        System.out.println("Connected: " + session.getId());
+        LOGGER.info("Connected: {}", session.getId());
     }
 
     @OnMessage
@@ -44,7 +47,7 @@ public class MyWebSocketEndpoint {
     @OnClose
     public void onClose(Session session) {
         webSocketSet.remove(this);
-        System.out.println("Disconnected: " + session.getId());
+        LOGGER.info("Disconnected: {}", session.getId());
     }
 
     public void broadcastMessage(String message) {
@@ -52,7 +55,7 @@ public class MyWebSocketEndpoint {
             try {
                 endpoint.session.getBasicRemote().sendText(message);
             } catch (IOException e) {
-                e.printStackTrace();
+                LOGGER.error("Error broadcasting message", e);
             }
         }
     }

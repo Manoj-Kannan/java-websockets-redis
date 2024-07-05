@@ -1,18 +1,14 @@
 package com.omega.websocket;
 
-import com.omega.redis.RedisConfig;
+import com.omega.config.TopicsConfig;
 import com.omega.redis.RedisPublisher;
 import com.omega.redis.RedisSubscriber;
-import redis.clients.jedis.Jedis;
 
 import java.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import java.io.IOException;
-import javax.websocket.OnClose;
-import javax.websocket.OnMessage;
-import javax.websocket.OnOpen;
-import javax.websocket.Session;
+
+import javax.websocket.*;
 import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
 import java.util.concurrent.ConcurrentHashMap;
@@ -25,19 +21,40 @@ public class MyWebSocketEndpoint {
     private static final Map<String, Set<MyWebSocketEndpoint>> topicSubscribers = new ConcurrentHashMap<>();
     private static RedisSubscriber redisSubscriber = new RedisSubscriber();
     private static RedisPublisher redisPublisher = new RedisPublisher();
+    private static final TopicsConfig topicsConfig = new TopicsConfig();
     private Session session;
     private String topic;
 
+    static {
+        // Initialize topicsConfig
+        topicsConfig.loadTopics();
+    }
+
     @OnOpen
     public void onOpen(@PathParam("topic") String topic, Session session) {
-        this.topic = topic;
-        this.session = session;
+        List<String> validTopics = topicsConfig.getTopics();
 
-        // Subscribe to Redis topic
-        topicSubscribers.computeIfAbsent(topic, k -> new CopyOnWriteArraySet<>()).add(this);
-        redisSubscriber.subscribe(topic);
+        if (validTopics.contains(topic)) {
+            // Proceed with handling the session
+            LOGGER.info("Session opened for topic: {}", topic);
 
-        LOGGER.info("Connected: session {} to topic: {}", session.getId(), topic);
+            this.topic = topic;
+            this.session = session;
+
+            // Subscribe to Redis topic
+            topicSubscribers.computeIfAbsent(topic, k -> new CopyOnWriteArraySet<>()).add(this);
+            redisSubscriber.subscribe(topic);
+
+            LOGGER.info("Connected: session {} to topic: {}", session.getId(), topic);
+        } else {
+            // Close the session if the topic is invalid
+            try {
+                session.close(new CloseReason(CloseReason.CloseCodes.CANNOT_ACCEPT, "Invalid topic"));
+                LOGGER.warn("Attempted to open session with invalid topic: {}", topic);
+            } catch (Exception e) {
+                LOGGER.error("Error closing session with invalid topic: {}", topic, e);
+            }
+        }
     }
 
     @OnMessage

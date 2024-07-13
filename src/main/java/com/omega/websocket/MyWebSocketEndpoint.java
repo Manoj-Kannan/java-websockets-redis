@@ -16,6 +16,8 @@ import java.util.concurrent.CopyOnWriteArraySet;
 
 @ServerEndpoint("/websocket/{topic}")
 public class MyWebSocketEndpoint {
+    // TODO - Message Producer gets the message (so message is duplicated)
+    // TODO - Why should we subecribe to a topic to send messages?
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MyWebSocketEndpoint.class);
     private static final Map<String, Set<MyWebSocketEndpoint>> topicSubscribers = new ConcurrentHashMap<>();
